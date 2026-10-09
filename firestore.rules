@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers -------------------------------------------------------
+    function signedIn() { return request.auth != null; }
+    function hasUser()  { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function myRole()   { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
+    function isAdmin()  { return hasUser() && myRole() == 'admin'; }
+    function isAcc()    { return hasUser() && myRole() in ['accounting', 'admin']; }
+    function isStaff()  { return hasUser() && myRole() in ['supervisor', 'accounting', 'admin']; }
+
+    // ---- users: sign-up creates a 'pending' user; only Admin changes roles ----
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAcc());
+      // CHANGE THE EMAIL BELOW to your admin email (lowercase). Same as ADMIN_EMAIL in firebase-config.js
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'department', 'createdAt'])
+        && request.resource.data.email == request.auth.token.email
+        && (request.resource.data.role == 'pending'
+            || (request.resource.data.role == 'admin' && request.auth.token.email == 'tslaundromatph@gmail.com'));
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
+      allow delete: if isAdmin();
+    }
+
+    // ---- requests: supervisors create and see their own; Accounting sees all ----
+    match /requests/{id} {
+      allow read: if isAcc() || (isStaff() && resource.data.uid == request.auth.uid);
+      allow create: if isStaff() && request.resource.data.uid == request.auth.uid && request.resource.data.rev == 1;
+      // A supervisor can edit only after Accounting returned it for clarification
+      allow update: if isStaff() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.rev == resource.data.rev + 1
+        && exists(/databases/$(database)/documents/decisions/$(id))
+        && get(/databases/$(database)/documents/decisions/$(id)).data.status == 'RETURNED FOR CLARIFICATION'
+        && get(/databases/$(database)/documents/decisions/$(id)).data.forRev == resource.data.rev;
+      allow delete: if isAdmin();
+    }
+
+    // ---- decisions: only Accounting writes; never on their own request ----
+    match /decisions/{id} {
+      allow read: if isAcc() || (isStaff() && resource.data.uid == request.auth.uid);
+      allow create, update: if isAcc()
+        && exists(/databases/$(database)/documents/requests/$(id))
+        && get(/databases/$(database)/documents/requests/$(id)).data.uid != request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ---- liquidations: the requester sends receipts after cash is released; Accounting verifies ----
+    match /liquidations/{id} {
+      allow read: if isAcc() || (isStaff() && resource.data.uid == request.auth.uid);
+      allow create: if isStaff() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.state == 'submitted'
+        && exists(/databases/$(database)/documents/requests/$(id))
+        && get(/databases/$(database)/documents/requests/$(id)).data.uid == request.auth.uid
+        && exists(/databases/$(database)/documents/decisions/$(id))
+        && get(/databases/$(database)/documents/decisions/$(id)).data.status == 'RELEASED';
+      allow update: if (isAcc() && resource.data.uid != request.auth.uid
+            && resource.data.state == 'submitted'
+            && request.resource.data.state in ['closed', 'returned']
+            && request.resource.data.actual == resource.data.actual
+            && request.resource.data.receipts == resource.data.receipts)
+        || (isStaff() && resource.data.uid == request.auth.uid
+            && request.resource.data.uid == resource.data.uid
+            && resource.data.state == 'returned'
+            && request.resource.data.state == 'submitted');
+      allow delete: if isAdmin();
+    }
+
+    // ---- receipt pictures (stored as small images inside the database) ----
+    match /receipts/{id} {
+      allow read: if isAcc() || (isStaff() && resource.data.uid == request.auth.uid);
+      allow create: if isStaff() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'reqId', 'name', 'data', 'at'])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 450000;
+      allow update, delete: if false;
+    }
+
+    // ---- vouchers, counters, settings: Accounting only ----
+    match /vouchers/{id}  { allow read, write: if isAcc(); }
+    match /counters/{id}  { allow read, write: if isAcc(); }
+    match /settings/{id}  { allow read, write: if isAcc(); }
+  }
+}
