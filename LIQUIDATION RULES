@@ -1,0 +1,38 @@
+FIRESTORE RULES FOR THE NEW "liquidations" COLLECTION
+======================================================
+The liquidation feature stores its data in a new collection called "liquidations"
+(one document per PCV, document id = PCV number, e.g. PCV-2026-0001).
+
+Firebase blocks any collection that has no rule, so add the block below to your
+existing rules (Firebase Console > Firestore Database > Rules), INSIDE the
+"match /databases/{database}/documents { ... }" block.
+
+It uses the same role check your other collections most likely use. If your rules
+already have a helper such as isAccounting(), use that instead of the one below.
+
+    function lqRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function lqStaff() { return request.auth != null && lqRole() in ['accounting','admin']; }
+
+    match /liquidations/{pcv} {
+      // Accounting/Admin see all; a supervisor sees only their own.
+      allow read:   if lqStaff() || (request.auth != null && resource.data.uid == request.auth.uid);
+
+      // Created automatically when cash is released (by Accounting), or the first time
+      // the owner opens the form for a voucher that was released before this update.
+      allow create: if lqStaff() || (request.auth != null && request.resource.data.uid == request.auth.uid
+                                     && request.resource.data.status == 'OPEN');
+
+      // Owner may edit only while OPEN or RETURNED, and may not change ownership or
+      // jump straight to VERIFIED. Accounting/Admin can verify or return.
+      allow update: if lqStaff()
+                    || (request.auth != null && resource.data.uid == request.auth.uid
+                        && resource.data.status in ['OPEN','RETURNED']
+                        && request.resource.data.uid == resource.data.uid
+                        && request.resource.data.status in ['OPEN','RETURNED','SUBMITTED']);
+      allow delete: if false;
+    }
+
+Note: a supervisor needs read access to their own documents through a query
+filtered by uid (the app already does this: where('uid','==',uid)).
