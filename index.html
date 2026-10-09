@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Petty Cash Budget Requests</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#18232e; --muted:#5b6b7a; --line:#d8dee5; --line-strong:#b9c3ce;
+  --accent:#1d5c7a; --accent-ink:#ffffff; --accent-soft:#e3eff5;
+  --ok:#1f6f43; --ok-bg:#dff1e6; --warn:#8a5a00; --warn-bg:#fdf0cf; --bad:#a3262a; --bad-bg:#fbe1e1;
+  --ask:#6b3fa0; --ask-bg:#ece3f7; --done:#35506b; --done-bg:#dce6f0;
+  --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:20px 60px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.wrap .wrap{max-width:none;width:100%}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.01em}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.chip{padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+nav{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--line)}
+nav button{font:inherit;font-weight:600;letter-spacing:.05em;font-size:13px;background:none;border:0;padding:10px 16px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+nav button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px}
+.panel h2,.h2{margin:0 0 4px;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+form,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f.wide{grid-column:1/-1}
+label{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:4px;padding:9px 10px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+.amt{position:relative}.amt span{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600}.amt input{padding-left:26px;font-family:var(--mono)}
+.btn{font:inherit;font-weight:700;letter-spacing:.05em;font-size:12.5px;border-radius:4px;padding:9px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.bad{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.ask{background:transparent;color:var(--ask);border-color:var(--ask)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline;padding:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.stat b{display:block;font-family:var(--mono);font-size:20px}
+.stat span{color:var(--muted);font-size:12px;letter-spacing:.03em}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px;border-bottom:1px solid var(--line-strong);background:var(--bg);white-space:nowrap}
+td{padding:10px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--mono);white-space:nowrap}
+.mono{font-family:var(--mono);font-weight:500}
+.badge{display:inline-block;padding:3px 9px;border-radius:4px;font-size:11.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.b-P{background:var(--warn-bg);color:var(--warn)}.b-A{background:var(--ok-bg);color:var(--ok)}.b-R{background:var(--bad-bg);color:var(--bad)}.b-C{background:var(--ask-bg);color:var(--ask)}.b-X{background:var(--done-bg);color:var(--done)}
+.next{color:var(--muted);font-size:12.5px;margin-top:5px;max-width:230px}
+.note{margin-top:5px;font-size:12.5px;padding:6px 9px;background:var(--bg);border-left:3px solid var(--line-strong);max-width:230px}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 13px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.review td{background:var(--accent-soft)}
+.review .grid{margin-bottom:12px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.banner{padding:10px 14px;border-radius:6px;background:var(--warn-bg);color:var(--warn);font-weight:500}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:6px;max-width:min(92vw,520px);z-index:60;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+.modal{position:fixed;inset:0;background:rgba(10,18,26,.72);z-index:50;overflow:auto;padding:16px;display:flex;justify-content:center;align-items:flex-start}
+.modal .card{background:var(--surface);border-radius:8px;padding:16px;max-width:760px;width:100%;display:flex;flex-direction:column;gap:12px}
+.authbox{max-width:420px;margin:8vh auto 0}
+.authbox .panel{display:flex;flex-direction:column;gap:14px}
+.authbox form{grid-template-columns:1fr}
+details summary{cursor:pointer;font-weight:600;color:var(--accent)}
+
+/* ---- printable voucher (always black on white, like paper) ---- */
+.vsheet{background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;border:1px solid #888;padding:.35in .4in;width:100%}
+.vsheet .vrep{text-align:right;font-weight:700;font-size:12px;height:16px}
+.vsheet .vco{text-align:center;font-weight:700;font-size:18px;letter-spacing:.02em}
+.vsheet .vti{text-align:center;font-weight:700;font-size:26px;margin:4px 0 14px}
+.vsheet .vhead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.vsheet .vpcv{font-family:'Courier New',monospace;font-weight:700;font-size:21px}
+.vsheet .vr{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px}
+.vsheet .vr b{flex:0 0 150px;font-size:12px;letter-spacing:.02em}
+.vsheet .vr div{flex:1;border-bottom:1px solid #000;min-height:22px;font-size:15px;padding-bottom:2px}
+.vsheet .vr.big div{font-size:22px;font-weight:700}
+.vsheet .vr.words div{font-size:13px;font-weight:700}
+.vsheet .vsign{display:flex;gap:40px;margin-top:26px;flex-wrap:wrap}
+.vsheet .vsign>div{flex:1;min-width:200px}
+.vsheet .vsign b{font-size:12px}
+.vsheet .vline{border-bottom:1px solid #000;height:46px}
+.vsheet .cap{font-size:11px;margin-top:3px}
+.vsheet .vdate{display:flex;gap:8px;align-items:flex-end;margin-top:16px}
+.vsheet .vdate i{flex:1;border-bottom:1px solid #000;height:16px}
+/* liquidation form (inside .vsheet) */
+.vsheet .lsec{font-weight:700;font-size:13px;letter-spacing:.03em;margin:20px 0 6px;border-bottom:1px solid #000;padding-bottom:3px}
+.vsheet table.ltab{min-width:0;width:100%;border-collapse:collapse}
+.vsheet .ltab th{background:#fff;color:#000;border-bottom:1px solid #000;font-size:11.5px;padding:5px 6px}
+.vsheet .ltab td{padding:5px 6px;border-bottom:1px solid #999;font-size:14px;vertical-align:middle;white-space:normal}
+.vsheet .ltab td.n,.vsheet .ltab th.n{text-align:right}
+.vsheet .ltab input{background:#fff;color:#000;padding:6px 7px}
+.vsheet .ltab input[readonly]{background:#eee}
+.vsheet .ltab td.tot{font-weight:700}
+.vsheet .ltab td.w{width:60%}
+.vsheet .lsum{border:1px solid #000;min-height:90px;padding:8px;white-space:pre-wrap;font-size:14px}
+.vsheet textarea.lsum{background:#fff;color:#000;width:100%;min-height:110px}
+.vsheet .lrem{margin-top:12px;border-left:4px solid #000;padding:6px 10px;font-size:13px;background:#f1f1f1}
+.vsheet .lstat{font-weight:700}
+@media print{
+  @page{size:letter;margin:.5in}
+  body{background:#fff;padding:0}
+  body>*:not(#modal):not(#lmodal){display:none!important}
+  #modal,#lmodal{position:static;background:none;padding:0;overflow:visible}
+  #modal .card,#lmodal .card{box-shadow:none;max-width:none;padding:0}
+  .noprint{display:none!important}
+  .vsheet{border:2px solid #000}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="loading"><div class="empty">Loading…</div></div>
+
+<!-- ============ LOG IN / SIGN UP ============ -->
+<div class="authbox" id="authView" hidden>
+  <div class="panel">
+    <div><h1>Petty Cash Budget Requests</h1><div class="sub" id="authSub">Log in to continue.</div></div>
+    <div id="setupBanner" class="banner" hidden>This website is not set up yet. Open the file <b>firebase-config.js</b> and paste your Firebase settings (see SETUP-GABAY).</div>
+    <form id="authForm" autocomplete="on">
+      <div class="f" id="nameRow" hidden><label for="aName">Your full name</label><input id="aName" type="text" maxlength="80" autocomplete="name"></div>
+      <div class="f"><label for="aEmail">Email</label><input id="aEmail" type="email" required autocomplete="email"></div>
+      <div class="f"><label for="aPass">Password</label><input id="aPass" type="password" required minlength="6" autocomplete="current-password"></div>
+      <button class="btn" id="aSubmit" type="submit">LOG IN</button>
+    </form>
+    <div class="row" style="justify-content:space-between;font-size:13px">
+      <button class="link" id="aToggle" type="button">New here? Create an account</button>
+      <button class="link" id="aForgot" type="button">Forgot password</button>
+    </div>
+    <div id="authMsg" class="banner" hidden></div>
+  </div>
+</div>
+
+<!-- ============ WAITING FOR ADMIN ============ -->
+<div class="authbox" id="pendingView" hidden>
+  <div class="panel">
+    <h1>Almost there</h1>
+    <p style="margin:0">Your account is created. The Admin must give you a role (Supervisor or Accounting) before you can use the system. Please tell the Admin you signed up, then reload this page.</p>
+    <div class="mono" id="pendingEmail"></div>
+    <button class="btn ghost" id="pendingOut">LOG OUT</button>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div class="wrap" id="appView" hidden>
+  <header>
+    <div><h1>Petty Cash Budget Requests</h1><div class="sub">Supervisor requests. Accounting approves. Voucher is made automatically.</div></div>
+    <div class="who"><span id="whoName"></span><span class="chip" id="whoRole"></span><button class="link" id="logout">Log out</button></div>
+  </header>
+  <nav role="tablist">
+    <button role="tab" id="tab-req" aria-selected="true" data-tab="req">REQUEST BUDGET</button>
+    <button role="tab" id="tab-acc" aria-selected="false" data-tab="acc" hidden>ACCOUNTING</button>
+    <button role="tab" id="tab-rep" aria-selected="false" data-tab="rep" hidden>REPORTS</button>
+    <button role="tab" id="tab-usr" aria-selected="false" data-tab="usr" hidden>USERS</button>
+  </nav>
+
+  <section id="view-req" class="wrap">
+    <div class="panel" id="formPanel">
+      <h2 id="formTitle">New request</h2>
+      <p class="hint" id="formHint">Fill in the form and press Submit. Accounting will see it right away.</p>
+      <form id="reqForm" autocomplete="off">
+        <div class="f"><label for="fDate">Request date</label><input type="date" id="fDate" required></div>
+        <div class="f"><label for="fSup">Requesting supervisor</label><input type="text" id="fSup" required maxlength="80"></div>
+        <div class="f"><label for="fDept">Department</label><select id="fDept" required></select></div>
+        <div class="f"><label for="fAmt">Amount requested</label><div class="amt"><span>₱</span><input type="number" id="fAmt" min="0.01" step="0.01" inputmode="decimal" required placeholder="0.00"></div></div>
+        <div class="f"><label for="fType">Expense type</label><select id="fType" required></select></div>
+        <div class="f"><label for="fPurpose">Purpose / description</label><input type="text" id="fPurpose" required maxlength="200" placeholder="Example: Router for the office"></div>
+        <div class="f wide"><label for="fRem">Remarks (optional)</label><textarea id="fRem" maxlength="500"></textarea></div>
+        <div class="f wide row"><button class="btn" id="fSubmit" type="submit">SUBMIT REQUEST</button><button class="btn ghost" id="fCancel" type="button" hidden>CANCEL EDIT</button></div>
+      </form>
+    </div>
+    <div>
+      <h2 class="h2" style="margin-bottom:8px">My requests</h2>
+      <div class="tablewrap" id="myTable"></div>
+    </div>
+  </section>
+
+  <section id="view-acc" class="wrap" hidden>
+    <div class="stats" id="accStats"></div>
+    <div class="filters" id="accFilters"></div>
+    <div class="tablewrap" id="accTable"></div>
+    <details class="panel"><summary>Voucher settings</summary>
+      <p class="hint" style="margin-top:10px">The company name printed at the top of every voucher.</p>
+      <div class="row"><input id="companyName" style="max-width:360px" maxlength="80" placeholder="Company name"><button class="btn" id="saveCompany">SAVE NAME</button></div>
+    </details>
+  </section>
+
+  <section id="view-rep" class="wrap" hidden>
+    <div class="panel"><h2>Monthly report</h2><p class="hint">Choose a month, then download all the records in Excel.</p>
+      <div class="row" style="align-items:flex-end">
+        <div class="f" style="max-width:200px"><label for="repMonth">Month</label><input type="month" id="repMonth"></div>
+        <label class="row" style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500"><input type="checkbox" id="repAll" style="width:auto"> Show all months</label>
+        <button class="btn" id="repDl">DOWNLOAD EXCEL</button>
+      </div></div>
+    <div class="stats" id="repStats"></div>
+    <div><h2 class="h2" style="margin-bottom:8px">Summary by expense type</h2><div class="tablewrap" id="repSum"></div></div>
+    <div><h2 class="h2" style="margin-bottom:8px">Audit log</h2><p class="hint" style="margin-top:0">Who did what, and when (Philippine time).</p><div class="tablewrap" id="repAudit"></div></div>
+  </section>
+
+  <section id="view-usr" class="wrap" hidden>
+    <div class="panel"><h2>People who can use this system</h2>
+      <p class="hint">New people sign up themselves. Then you choose their role here. <b>Supervisor</b> can send requests. <b>Accounting</b> can approve, print vouchers and see reports. <b>Admin</b> can do everything and manage this list. <b>Pending</b> means no access yet.</p></div>
+    <div class="tablewrap" id="usrTable"></div>
+  </section>
+</div>
+
+<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Petty cash voucher">
+  <div class="card">
+    <div class="row noprint" style="justify-content:space-between"><b id="mTitle">Voucher</b><span class="mono" id="mCount"></span></div>
+    <div class="vsheet" id="vSheet"></div>
+    <div class="row noprint"><button class="btn" id="mPrint">PRINT VOUCHER</button><button class="btn ghost" id="mClose">CLOSE</button></div>
+    <div class="hint noprint" style="margin:0">Print on Letter paper, then give the voucher to the requester to sign.</div>
+  </div>
+</div>
+<div id="lmodal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Liquidation form">
+  <div class="card">
+    <div class="row noprint" style="justify-content:space-between"><b id="lTitle">Liquidation form</b><span id="lBadge"></span></div>
+    <div class="vsheet" id="lSheet"></div>
+    <div class="noprint" id="lRev" hidden></div>
+    <div class="row noprint" id="lBtns"></div>
+    <div class="hint noprint" id="lHint" style="margin:0"></div>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script type="module">
+import {firebaseConfig, ADMIN_EMAIL} from './firebase-config.js';
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {getFirestore,collection,doc,setDoc,updateDoc,onSnapshot,query,where,runTransaction,increment} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const TYPES=['REPAIR & MAINTENANCE','GAS & OIL','REPRESENTATION','TAXES & LICENSES','FREIGHT','TRAVEL EXP','COMMUNICATION','MARKETING SUPPLIES','OFFICE SUPPLIES','TECHNICAL EXPENSE','OFFICE EQUIPMENT','PANTRY','TOLL/PARKING','CAR EXPENSE','CONSTRUCTION MATERIALS'];
+const DEPTS=['Marketing & Sales Department','Technical Department','Construction Department','Accounting Department'];
+const ROLES=['pending','supervisor','accounting','admin'];
+const ST={P:'FOR ACCOUNTING APPROVAL',A:'APPROVED / FOR RELEASE',R:'REJECTED',C:'RETURNED FOR CLARIFICATION',X:'RELEASED'};
+const KEY=Object.fromEntries(Object.entries(ST).map(([k,v])=>[v,k]));
+const peso=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP',minimumFractionDigits:2});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayManila=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila'}).format(new Date());
+const nowIso=()=>new Date().toISOString();
+function fmtDate(iso,long){if(!iso)return'';const[y,m,d]=iso.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));
+  if(long)return dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'});
+  const yr=String(new Date().getFullYear())===String(y);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',...(yr?{}:{year:'numeric'}),timeZone:'UTC'})}
+
+/* ---------- amount in words ---------- */
+const ONES=['','ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+const TENS=['','','TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+function grp(n){let s='';if(n>=100){s+=ONES[Math.floor(n/100)]+' HUNDRED ';n%=100}if(n>0){if(n<20)s+=ONES[n]+' ';else s+=TENS[Math.floor(n/10)]+(n%10?'-'+ONES[n%10]:'')+' '}return s}
+function inWords(amount){const a=Math.round(amount*100)/100;if(!(a>0))return'';const p=Math.floor(a),c=Math.round((a-p)*100);
+  const m=Math.floor(p/1e6),t=Math.floor((p%1e6)/1000),h=p%1000;
+  const w=p===0?'ZERO ':(m?grp(m)+'MILLION ':'')+(t?grp(t)+'THOUSAND ':'')+grp(h);
+  return(w+'PESOS'+(c?' AND '+String(c).padStart(2,'0')+'/100':'')+' ONLY').replace(/\s+/g,' ').trim()}
+
+/* ---------- state ---------- */
+const LQ={OPEN:'FOR LIQUIDATION',SUBMITTED:'SUBMITTED, FOR VERIFICATION',RETURNED:'RETURNED FOR REVISION',VERIFIED:'LIQUIDATED'};
+const LQC={OPEN:'P',SUBMITTED:'C',RETURNED:'R',VERIFIED:'A'};
+const S={fb:null,auth:null,db:null,uid:null,email:'',name:'',role:'pending',reqs:{},decs:{},vouchers:{},liqs:{},lq:null,users:{},company:'COMPANY NAME',tab:'req',filter:'P',review:null,editing:null,busy:false,month:'',all:false,signup:false,pendingName:'',unsubs:[],printing:null};
+const isAcc=()=>S.role==='accounting'||S.role==='admin';
+const statusOf=id=>{const r=S.reqs[id],d=S.decs[id];if(!d||(d.forRev||0)<(r.rev||1))return ST.P;return d.status};
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,5200)}
+const badge=st=>`<span class="badge b-${KEY[st]}">${esc(st)}</span>`;
+function nextText(st,acc){
+  if(st===ST.P)return acc?'Please review, then approve, reject, or ask for clarification.':'Waiting for Accounting to review.';
+  if(st===ST.A)return acc?'Print the voucher, let the requester sign it, give the cash, then mark as released.':'Approved. Accounting will give you the voucher to sign when the cash is released.';
+  if(st===ST.R)return acc?'Closed. The supervisor can send a new request.':'Rejected. You can send a new request.';
+  if(st===ST.C)return acc?'Waiting for the supervisor to update the request.':'Accounting needs more information. Press EDIT AND RESEND.';
+  return acc?'Cash released. The requester must liquidate it.':'Cash released. Please fill in and submit your liquidation form.'}
+const lqOf=id=>{const d=S.decs[id];return d&&d.pcvNo?S.liqs[d.pcvNo]:undefined};
+const lqStatus=id=>(lqOf(id)||{status:'OPEN'}).status;
+const lqBadge=s=>`<span class="badge b-${LQC[s]}">${LQ[s]}</span>`;
+const reqNo=id=>'REQ-'+id.slice(-6).toUpperCase();
+const sorted=ids=>ids.sort((a,b)=>(S.reqs[b].date||'').localeCompare(S.reqs[a].date||'')||(S.reqs[b].createdAt||'').localeCompare(S.reqs[a].createdAt||''));
+
+/* ---------- views ---------- */
+function show(which){['loading','authView','pendingView','appView'].forEach(v=>$(v).hidden=v!==which)}
+function setTab(t){S.tab=t;['req','acc','rep','usr'].forEach(k=>{$('view-'+k).hidden=k!==t;$('tab-'+k).setAttribute('aria-selected',k===t)})}
+
+/* ---------- lists ---------- */
+function renderMine(){
+  const ids=sorted(Object.keys(S.reqs).filter(id=>S.reqs[id].uid===S.uid));
+  if(!ids.length){$('myTable').innerHTML='<div class="empty">You have no requests yet. Fill in the form above to send your first one.</div>';return}
+  $('myTable').innerHTML='<table><thead><tr><th>Date</th><th class="n">Amount</th><th>Expense type</th><th>Purpose</th><th>Status</th><th></th></tr></thead><tbody>'+ids.map(id=>{
+    const r=S.reqs[id],d=S.decs[id],st=statusOf(id);const note=d&&d.remarks&&(d.forRev||0)>=(r.rev||1)&&st!==ST.P?`<div class="note"><b>Accounting:</b> ${esc(d.remarks)}</div>`:'';
+    const ls=st===ST.X?lqStatus(id):'';
+    const act=st===ST.C?`<button class="btn ghost" data-a="edit" data-id="${id}">EDIT AND RESEND</button>`
+      :st===ST.X?`<button class="btn${ls==='OPEN'||ls==='RETURNED'?'':' ghost'}" data-a="liq" data-id="${id}">${ls==='OPEN'?'FILL IN LIQUIDATION':ls==='RETURNED'?'REVISE LIQUIDATION':'VIEW LIQUIDATION'}</button>`:'';
+    return`<tr><td>${fmtDate(r.date)}</td><td class="n">${peso.format(r.amount)}</td><td>${esc(r.type)}</td><td>${esc(r.purpose)}<div class="mono" style="color:var(--muted);font-size:11.5px">${reqNo(id)}</div></td>
+      <td>${badge(st)}${d&&d.pcvNo&&(st===ST.A||st===ST.X)?`<div class="mono" style="font-size:12px;margin-top:4px">${esc(d.pcvNo)}</div>`:''}${ls?`<div style="margin-top:6px">${lqBadge(ls)}</div>`:''}<div class="next">${esc(nextText(st,false))}</div>${note}${ls==='RETURNED'&&lqOf(id).remarks?`<div class="note"><b>Accounting:</b> ${esc(lqOf(id).remarks)}</div>`:''}</td><td>${act}</td></tr>`}).join('')+'</tbody></table>'}
+
+function renderAcc(){
+  if(!isAcc())return;
+  const c={P:0,A:0,X:0},amt={P:0,A:0,X:0};
+  Object.keys(S.reqs).forEach(id=>{const k=KEY[statusOf(id)];if(c[k]!==undefined){c[k]++;amt[k]+=k==='P'?S.reqs[id].amount:(S.decs[id]?.approvedAmount??S.reqs[id].amount)}});
+  let ln=0,la=0;Object.keys(S.reqs).forEach(id=>{if(KEY[statusOf(id)]==='X'&&lqStatus(id)!=='VERIFIED'){ln++;la+=S.decs[id]?.approvedAmount??S.reqs[id].amount}});
+  $('accStats').innerHTML=[['Waiting for approval','P'],['Approved, for release','A'],['Released','X']].map(([l,k])=>`<div class="stat"><b>${c[k]}</b><span>${l} · ${peso.format(amt[k])}</span></div>`).join('')
+    +`<div class="stat"><b>${ln}</b><span>Not yet liquidated · ${peso.format(la)}</span></div>`;
+  const f=[['P','Waiting for approval'],['A','For release'],['X','Released'],['L','For liquidation'],['RC','Rejected / Returned'],['ALL','All']];
+  $('accFilters').innerHTML=f.map(([k,l])=>`<button data-f="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join('');
+  const ids=sorted(Object.keys(S.reqs).filter(id=>{const k=KEY[statusOf(id)];return S.filter==='ALL'||(S.filter==='RC'?(k==='R'||k==='C'):S.filter==='L'?(k==='X'&&lqStatus(id)!=='VERIFIED'):k===S.filter)}));
+  if(!ids.length){$('accTable').innerHTML='<div class="empty">Nothing here right now.</div>';return}
+  let h='<table><thead><tr><th>Date</th><th>Supervisor</th><th>Department</th><th class="n">Amount</th><th>Expense type</th><th>Purpose</th><th>Status</th><th>Accounting remarks</th><th>Action</th></tr></thead><tbody>';
+  ids.forEach(id=>{
+    const r=S.reqs[id],d=S.decs[id],st=statusOf(id),k=KEY[st],v=Object.values(S.vouchers).find(x=>x.reqId===id);
+    const shownType=d&&d.finalType&&k!=='P'?d.finalType:r.type,amt=d&&d.approvedAmount!=null&&k!=='P'?d.approvedAmount:r.amount;
+    let act='';
+    if(k==='P')act=`<button class="btn" data-a="review" data-id="${id}">${S.review&&S.review.id===id?'CLOSE':'REVIEW'}</button>`;
+    else if(k==='A')act=`<div class="row"><button class="btn ghost" data-a="view" data-id="${id}">VIEW VOUCHER</button><button class="btn" data-a="print" data-id="${id}">PRINT VOUCHER</button><button class="btn ok" data-a="release" data-id="${id}">MARK RELEASED</button></div>`;
+    else if(k==='X'){const ls=lqStatus(id);act=`<div class="row"><button class="btn ghost" data-a="view" data-id="${id}">VIEW VOUCHER</button><button class="btn${ls==='SUBMITTED'?'':' ghost'}" data-a="liq" data-id="${id}">${ls==='SUBMITTED'?'REVIEW LIQUIDATION':'LIQUIDATION FORM'}</button></div>`}
+    h+=`<tr><td>${fmtDate(r.date)}</td><td>${esc(r.supervisor)}</td><td>${esc(r.dept.replace(' Department',''))}</td><td class="n">${peso.format(amt)}${amt!==r.amount?`<div style="color:var(--muted);font-size:11px">asked ${peso.format(r.amount)}</div>`:''}</td>
+      <td>${esc(shownType)}${shownType!==r.type?`<div style="color:var(--muted);font-size:11px">asked: ${esc(r.type)}</div>`:''}</td><td>${esc(r.purpose)}${r.remarks?`<div class="note">${esc(r.remarks)}</div>`:''}</td>
+      <td>${badge(st)}${d&&d.pcvNo?`<div class="mono" style="font-size:12px;margin-top:4px">${esc(d.pcvNo)}${v&&v.printCount?` · printed ${v.printCount}×`:''}</div>`:''}${k==='X'?`<div style="margin-top:6px">${lqBadge(lqStatus(id))}</div>`:''}<div class="next">${esc(nextText(st,true))}</div></td>
+      <td>${d&&d.remarks&&k!=='P'?esc(d.remarks):''}</td><td>${act}</td></tr>`;
+    if(S.review&&S.review.id===id&&k==='P'){const p=S.review,own=r.uid===S.uid;
+      h+=`<tr class="review"><td colspan="9"><div class="grid">
+        <div class="f"><label for="rAmt">Approved amount</label><div class="amt"><span>₱</span><input id="rAmt" type="number" step="0.01" min="0.01" value="${esc(p.amount)}"></div></div>
+        <div class="f"><label for="rType">Expense type (change only if wrong)</label><select id="rType">${TYPES.map(t=>`<option${t===p.type?' selected':''}>${esc(t)}</option>`).join('')}</select></div>
+        <div class="f" style="grid-column:1/-1"><label for="rRem">Accounting remarks (needed to reject or ask for clarification)</label><textarea id="rRem">${esc(p.remarks)}</textarea></div></div>
+        ${own?'<div class="note" style="margin-bottom:10px">This is your own request. Another Accounting user must approve it.</div>':''}
+        <div class="row"><button class="btn ok" data-a="approve" data-id="${id}" ${own||S.busy?'disabled':''}>APPROVE</button><button class="btn bad" data-a="reject" data-id="${id}" ${own||S.busy?'disabled':''}>REJECT</button><button class="btn ask" data-a="return" data-id="${id}" ${own||S.busy?'disabled':''}>RETURN / NEED CLARIFICATION</button></div>
+        <div class="hint" style="margin:8px 0 0">Approving makes the Petty Cash Voucher and changes the request to APPROVED / FOR RELEASE.</div></td></tr>`}
+  });
+  $('accTable').innerHTML=h+'</tbody></table>'}
+
+function renderUsers(){
+  if(S.role!=='admin')return;
+  const us=Object.entries(S.users).sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
+  $('usrTable').innerHTML='<table style="min-width:640px"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th></tr></thead><tbody>'+us.map(([id,u])=>{const me=id===S.uid;
+    return`<tr><td>${esc(u.name||'(no name)')}${me?' (you)':''}</td><td>${esc(u.email)}</td>
+      <td><select data-u="${id}" data-field="role" ${me?'disabled':''}>${ROLES.map(r=>`<option value="${r}"${r===u.role?' selected':''}>${r.toUpperCase()}</option>`).join('')}</select></td>
+      <td><select data-u="${id}" data-field="department"><option value="">(none)</option>${DEPTS.map(d=>`<option${d===u.department?' selected':''}>${esc(d)}</option>`).join('')}</select></td></tr>`}).join('')+'</tbody></table>'}
+function renderAll(){renderMine();renderAcc();renderRep();renderUsers()}
+
+/* ---------- actions ---------- */
+const log=(d,action,note)=>[...(d?.log||[]),{at:nowIso(),by:S.uid,action,note:note||''}];
+const todayYear=()=>todayManila().slice(0,4);
+async function decide(id,status,extra){
+  const r=S.reqs[id],old=S.decs[id];
+  await setDoc(doc(S.db,'decisions',id),{uid:r.uid,status,forRev:r.rev||1,remarks:extra.remarks||'',approvedAmount:extra.approvedAmount??null,finalType:extra.finalType||null,pcvNo:extra.pcvNo||null,by:S.uid,at:nowIso(),log:log(old,status,extra.remarks)})}
+async function approve(id){
+  const p=S.review,r=S.reqs[id],amt=Math.round(parseFloat(p.amount)*100)/100;
+  if(!(amt>0))return toast('Enter the approved amount.');
+  S.busy=true;renderAcc();
+  try{
+    const year=todayYear(),cRef=doc(S.db,'counters','pcv-'+year),dRef=doc(S.db,'decisions',id);
+    const res=await runTransaction(S.db,async tx=>{
+      const c=await tx.get(cRef),d=await tx.get(dRef);
+      if(d.exists()&&d.data().status===ST.A&&(d.data().forRev||0)>=(r.rev||1))return{already:d.data().pcvNo};
+      const n=(c.exists()?c.data().n:0)+1,pcvNo=`PCV-${year}-${String(n).padStart(4,'0')}`;
+      tx.set(cRef,{n});
+      tx.set(doc(S.db,'vouchers',pcvNo),{pcvNo,reqId:id,date:r.date,name:r.supervisor,dept:r.dept,purpose:r.purpose,type:p.type,amount:amt,createdAt:nowIso(),createdBy:S.uid,printCount:0});
+      tx.set(dRef,{uid:r.uid,status:ST.A,forRev:r.rev||1,remarks:p.remarks||'',approvedAmount:amt,finalType:p.type,pcvNo,by:S.uid,at:nowIso(),log:log(S.decs[id],ST.A,p.remarks)});
+      return{pcvNo}});
+    S.review=null;toast(res.already?`Already approved. Voucher ${res.already}.`:`Approved. Voucher ${res.pcvNo} is ready to print.`);
+  }catch(e){toast('Could not approve. '+niceErr(e))}
+  finally{S.busy=false;renderAcc()}}
+async function rejectOrReturn(id,status){
+  const p=S.review;if(!p.remarks.trim())return toast('Please type a remark so the supervisor knows why.');
+  S.busy=true;renderAcc();
+  try{await decide(id,status,{remarks:p.remarks.trim()});S.review=null;toast(status===ST.R?'Request rejected.':'Returned to the supervisor.')}
+  catch(e){toast('Could not save. '+niceErr(e))}
+  finally{S.busy=false;renderAcc()}}
+async function release(id){
+  try{const d=S.decs[id];await updateDoc(doc(S.db,'decisions',id),{status:ST.X,releasedAt:nowIso(),releasedBy:S.uid,log:log(d,ST.X,'Cash released')});
+    let msg='Marked as released. A liquidation form was created.';
+    try{await ensureLiq(id)}catch(e){msg='Marked as released. The liquidation form will be created when it is first opened.'}
+    toast(msg)}
+  catch(e){toast('Could not save. '+niceErr(e))}}
+const niceErr=e=>e&&e.code==='permission-denied'?'You are not allowed to do this.':(e&&e.message)||'Please try again.';
+
+/* ---------- voucher ---------- */
+let current=null;
+function renderVoucher(v){
+  $('vSheet').innerHTML=`<div class="vrep">${(v.printCount||0)>0?'*** REPRINT ***':''}</div>
+   <div class="vco">${esc((S.company||'COMPANY NAME').toUpperCase())}</div><div class="vti">PETTY CASH VOUCHER</div>
+   <div class="vhead"><div><b>PCV NO.:</b> <span class="vpcv">${esc(v.pcvNo)}</span></div><div><b>DATE:</b> ${esc(fmtDate(v.date,true))}</div></div>
+   <div class="vr"><b>REQUESTED BY:</b><div>${esc(v.name)}</div></div>
+   <div class="vr"><b>DEPARTMENT:</b><div>${esc(v.dept)}</div></div>
+   <div class="vr"><b>PURPOSE:</b><div>${esc(v.purpose)}</div></div>
+   <div class="vr"><b>EXPENSE TYPE:</b><div>${esc(v.type)}</div></div>
+   <div class="vr big"><b>AMOUNT:</b><div>${esc(peso.format(v.amount))}</div></div>
+   <div class="vr words"><b>AMOUNT IN WORDS:</b><div>${esc(inWords(v.amount))}</div></div>
+   <div class="vsign"><div><b>RECEIVED BY:</b><div class="vline"></div><div class="cap">Name / Signature</div>
+     <div class="vdate"><b style="font-size:12px">DATE RECEIVED:</b><i></i></div></div>
+     <div><b>APPROVED BY:</b><div class="vline"></div><div class="cap">Accounting</div></div></div>`;
+  $('mTitle').textContent='Petty Cash Voucher '+v.pcvNo;$('mCount').textContent=v.printCount?`Printed ${v.printCount}×`:'Not printed yet';
+  $('mPrint').textContent=v.printCount?'REPRINT VOUCHER':'PRINT VOUCHER'}
+function openVoucher(id,printNow){
+  const v=Object.values(S.vouchers).find(x=>x.reqId===id);if(!v)return toast('No voucher found for this request.');
+  current=v;renderVoucher(v);$('modal').hidden=false;if(printNow)setTimeout(printCurrent,100)}
+function printCurrent(){if(!current)return;S.printing=current.pcvNo;window.print()}
+window.addEventListener('afterprint',async()=>{
+  const pcv=S.printing;S.printing=null;if(!pcv)return;
+  try{await updateDoc(doc(S.db,'vouchers',pcv),{printCount:increment(1),lastPrintedAt:nowIso(),lastPrintedBy:S.uid})}catch(e){toast('Printed, but the print count could not be saved.')}});
+
+/* ---------- liquidation form (one per released voucher, keyed by PCV no.) ---------- */
+const rmoney=n=>peso.format(n||0);
+const r2=n=>Math.round(n*100)/100;
+function lqTotals(f,amount){const spent=r2(f.items.length?f.items.reduce((s,x)=>s+(parseFloat(x.amount)||0),0):(parseFloat(f.spent)||0));return{spent,bal:r2(amount-spent)}}
+const balLabel=b=>b>0?'UNUSED CASH TO RETURN TO ACCOUNTING':b<0?'EXCESS SPENT, FOR REIMBURSEMENT':'FULLY SPENT, NO BALANCE';
+async function ensureLiq(id){
+  const r=S.reqs[id],d=S.decs[id];if(!r||!d||!d.pcvNo)throw new Error('No voucher found for this request.');
+  const ref=doc(S.db,'liquidations',d.pcvNo);
+  const l=await runTransaction(S.db,async tx=>{const s=await tx.get(ref);if(s.exists())return s.data();
+    const n={pcvNo:d.pcvNo,reqId:id,uid:r.uid,date:r.date,name:r.supervisor,dept:r.dept,purpose:r.purpose,type:d.finalType||r.type,amount:d.approvedAmount??r.amount,
+      status:'OPEN',summary:'',items:[],spent:null,balance:null,remarks:'',createdAt:nowIso(),createdBy:S.uid,log:[{at:nowIso(),by:S.uid,action:'Liquidation form created',note:''}]};
+    tx.set(ref,n);return n});
+  S.liqs[d.pcvNo]=l;return l}
+async function openLiq(id){
+  try{const l=await ensureLiq(id);S.lq={pcvNo:l.pcvNo,form:null,edit:false};drawLiq(true);$('lmodal').hidden=false}
+  catch(e){toast('Could not open the liquidation form. '+niceErr(e))}}
+function drawLiq(fresh){
+  const q=S.lq,l=q&&S.liqs[q.pcvNo];if(!l)return;
+  const mine=l.uid===S.uid,edit=mine&&(l.status==='OPEN'||l.status==='RETURNED');
+  if(fresh||!q.form)q.form={summary:l.summary||'',spent:l.spent??'',items:(l.items||[]).map(x=>({desc:x.desc,amount:x.amount}))};
+  q.edit=edit;const f=q.form,t=lqTotals(edit?f:{items:l.items||[],spent:l.spent},l.amount),canReview=isAcc()&&!mine&&l.status==='SUBMITTED';
+  const rows=edit?f.items.map((x,i)=>`<tr><td class="w"><input data-li="${i}" data-lf="desc" value="${esc(x.desc)}" maxlength="120" aria-label="Item ${i+1} description" placeholder="What was bought or paid for"></td><td class="n"><input data-li="${i}" data-lf="amount" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(x.amount)}" aria-label="Item ${i+1} amount" placeholder="0.00"></td><td class="noprint"><button class="btn bad" type="button" data-a="lq-del" data-i="${i}" aria-label="Remove item ${i+1}">✕</button></td></tr>`).join('')
+    :(l.items||[]).map((x,i)=>`<tr><td>${i+1}. ${esc(x.desc)}</td><td class="n">${rmoney(x.amount)}</td></tr>`).join('')||'<tr><td colspan="2"><i>No itemized breakdown. See the summary above.</i></td></tr>';
+  $('lSheet').innerHTML=`<div class="vrep"></div>
+   <div class="vco">${esc((S.company||'COMPANY NAME').toUpperCase())}</div><div class="vti">LIQUIDATION FORM</div>
+   <div class="vhead"><div><b>LIQUIDATION OF PCV NO.:</b> <span class="vpcv">${esc(l.pcvNo)}</span></div><div><b>PCV DATE:</b> ${esc(fmtDate(l.date,true))}</div></div>
+   <div class="vr"><b>REQUEST NO.:</b><div>${esc(reqNo(l.reqId))}</div></div>
+   <div class="vr"><b>REQUESTED BY:</b><div>${esc(l.name)}</div></div>
+   <div class="vr"><b>DEPARTMENT:</b><div>${esc(l.dept)}</div></div>
+   <div class="vr"><b>PURPOSE:</b><div>${esc(l.purpose)}</div></div>
+   <div class="vr"><b>EXPENSE TYPE:</b><div>${esc(l.type)}</div></div>
+   <div class="vr big"><b>AMOUNT RELEASED:</b><div>${esc(rmoney(l.amount))}</div></div>
+   <div class="vr words"><b>AMOUNT IN WORDS:</b><div>${esc(inWords(l.amount))}</div></div>
+   <div class="vr"><b>STATUS:</b><div class="lstat">${esc(LQ[l.status])}</div></div>
+   <div class="lsec">WHAT ACTUALLY HAPPENED TO THE BUDGET (SUMMARY)</div>
+   ${edit?`<textarea id="lqSummary" class="lsum" maxlength="2000" placeholder="Example: Bought the router and 2 LAN cables from ABC Computers. The remaining cash was returned to Accounting.">${esc(f.summary)}</textarea>`:`<div class="lsum">${esc(l.summary)}</div>`}
+   <div class="lsec">BREAKDOWN OF EXPENSES (OPTIONAL)</div>
+   <table class="ltab"><thead><tr><th>Description</th><th class="n">Amount</th>${edit?'<th class="noprint"></th>':''}</tr></thead><tbody>${rows}</tbody></table>
+   ${edit?'<div class="noprint" style="margin-top:8px"><button class="btn ghost" type="button" data-a="lq-add">+ ADD LINE</button></div>':''}
+   <div class="lsec">TOTALS</div>
+   <table class="ltab"><tbody>
+    <tr><td class="w">Amount released</td><td class="n">${rmoney(l.amount)}</td></tr>
+    <tr><td>Total actually spent</td><td class="n">${edit?`<div class="amt"><span>₱</span><input id="lqSpent" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(f.items.length?t.spent.toFixed(2):f.spent)}" ${f.items.length?'readonly':''} placeholder="0.00" aria-label="Total actually spent"></div>`:rmoney(t.spent)}</td></tr>
+    <tr><td class="tot" id="lqBalLbl">${balLabel(t.bal)}</td><td class="n tot" id="lqBal">${rmoney(Math.abs(t.bal))}</td></tr></tbody></table>
+   ${l.remarks&&l.status!=='SUBMITTED'?`<div class="lrem"><b>ACCOUNTING REMARKS:</b> ${esc(l.remarks)}</div>`:''}
+   <div class="vsign"><div><b>PREPARED BY:</b><div class="vline"></div><div class="cap">${esc(l.name)} · Name / Signature</div>${l.submittedAt?`<div class="cap">Submitted ${esc(fmtDate(ymd(l.submittedAt),true))}</div>`:''}</div>
+     <div><b>VERIFIED BY:</b><div class="vline"></div><div class="cap">Accounting${l.status==='VERIFIED'?' · '+esc(nameOf(l.verifiedBy))+', '+esc(fmtDate(ymd(l.verifiedAt),true)):''}</div></div></div>`;
+  $('lTitle').textContent='Liquidation of '+l.pcvNo;$('lBadge').innerHTML=lqBadge(l.status);
+  const rev=$('lRev');rev.hidden=!canReview;
+  rev.innerHTML=canReview?`<div class="f"><label for="lqRem">Accounting remarks (needed to return it for revision)</label><textarea id="lqRem" maxlength="500"></textarea></div>`:'';
+  $('lBtns').innerHTML=(edit?`<button class="btn" data-a="lq-submit">SUBMIT LIQUIDATION</button><button class="btn ghost" data-a="lq-save">SAVE DRAFT</button>`
+    :canReview?`<button class="btn ok" data-a="lq-verify">VERIFY / ACCEPT</button><button class="btn ask" data-a="lq-return">RETURN FOR REVISION</button>`:'')
+    +(!edit&&l.status!=='OPEN'?`<button class="btn ghost" data-a="lq-print">PRINT FORM</button>`:'')+`<button class="btn ghost" data-a="lq-close">CLOSE</button>`;
+  $('lHint').textContent=edit?'Write what happened to the cash. You may list each expense below. Save a draft any time, then submit when done. Return any unused cash to Accounting.'
+    :(isAcc()&&mine&&l.status==='SUBMITTED')?'This is your own liquidation. Another Accounting user must verify it.':l.status==='OPEN'?'Waiting for the requester to fill in this form.':''}
+const ymd=iso=>{const o=mParts(iso);return o.year+'-'+o.month+'-'+o.day};
+function updLiqTotals(){const q=S.lq,l=q&&S.liqs[q.pcvNo];if(!l||!q.edit)return;const t=lqTotals(q.form,l.amount),sp=$('lqSpent');
+  if(sp&&q.form.items.length)sp.value=t.spent.toFixed(2);$('lqBal').textContent=rmoney(Math.abs(t.bal));$('lqBalLbl').textContent=balLabel(t.bal)}
+function lqCollect(){const q=S.lq,f=q.form;
+  return{summary:f.summary.trim(),items:f.items.map(x=>({desc:x.desc.trim(),amount:r2(parseFloat(x.amount)||0)})).filter(x=>x.desc||x.amount),rawSpent:f.spent}}
+async function saveLiq(submit){
+  const q=S.lq,l=S.liqs[q.pcvNo],c=lqCollect();
+  if(submit){
+    if(!c.summary)return toast('Please write a summary of what happened to the budget.');
+    if(c.items.some(x=>!x.desc||!(x.amount>0)))return toast('Each breakdown line needs a description and an amount.');
+    if(!c.items.length&&(c.rawSpent===''||isNaN(parseFloat(c.rawSpent))))return toast('Type the total amount actually spent (0 if nothing was spent).');
+    if(!confirm('Submit this liquidation to Accounting? You cannot change it after this unless Accounting returns it.'))return}
+  const spent=lqTotals({items:c.items,spent:c.rawSpent},l.amount).spent;
+  const upd={summary:c.summary,items:c.items,spent,balance:r2(l.amount-spent),log:log(l,submit?'Liquidation submitted':'Draft saved')};
+  if(submit){upd.status='SUBMITTED';upd.submittedAt=nowIso();upd.submittedBy=S.uid}
+  try{await updateDoc(doc(S.db,'liquidations',q.pcvNo),upd);S.liqs[q.pcvNo]={...l,...upd};
+    if(submit){closeLiq();toast('Liquidation submitted to Accounting.')}else toast('Draft saved.')}
+  catch(e){toast('Could not save. '+niceErr(e))}}
+async function reviewLiq(verify){
+  const q=S.lq,l=S.liqs[q.pcvNo],rem=($('lqRem')?.value||'').trim();
+  if(!verify&&!rem)return toast('Please type a remark so the requester knows what to fix.');
+  const upd=verify?{status:'VERIFIED',remarks:rem,verifiedAt:nowIso(),verifiedBy:S.uid,log:log(l,'Liquidation verified',rem)}
+    :{status:'RETURNED',remarks:rem,log:log(l,'Liquidation returned for revision',rem)};
+  try{await updateDoc(doc(S.db,'liquidations',q.pcvNo),upd);closeLiq();toast(verify?'Liquidation verified.':'Returned to the requester.')}
+  catch(e){toast('Could not save. '+niceErr(e))}}
+function closeLiq(){$('lmodal').hidden=true;S.lq=null}
+document.addEventListener('input',e=>{const q=S.lq;if(!q||!q.edit||$('lmodal').hidden)return;const t=e.target;
+  if(t.id==='lqSummary')q.form.summary=t.value;
+  else if(t.id==='lqSpent')q.form.spent=t.value;
+  else if(t.dataset.li!==undefined)q.form.items[+t.dataset.li][t.dataset.lf]=t.value;
+  else return;
+  updLiqTotals()});
+$('lmodal').addEventListener('click',e=>{if(e.target.id==='lmodal'&&S.lq&&!S.lq.edit)closeLiq()});
+
+/* ---------- request form ---------- */
+function resetForm(){S.editing=null;$('reqForm').reset();$('fDate').value=todayManila();$('fSup').value=S.name||'';
+  const dep=S.users[S.uid]&&S.users[S.uid].department;$('fDept').value=dep||'';$('fType').value='';
+  $('formTitle').textContent='New request';$('formHint').textContent='Fill in the form and press Submit. Accounting will see it right away.';$('fSubmit').textContent='SUBMIT REQUEST';$('fCancel').hidden=true}
+function editRequest(id){const r=S.reqs[id];S.editing=id;$('fDate').value=r.date;$('fSup').value=r.supervisor;$('fDept').value=r.dept;$('fAmt').value=r.amount;$('fType').value=r.type;$('fPurpose').value=r.purpose;$('fRem').value=r.remarks||'';
+  $('formTitle').textContent='Update request '+reqNo(id);$('formHint').textContent='Accounting asked for more information. Fix the request and send it again.';$('fSubmit').textContent='SEND AGAIN';$('fCancel').hidden=false;$('formPanel').scrollIntoView({behavior:'smooth',block:'start'})}
+$('reqForm').addEventListener('submit',async e=>{e.preventDefault();
+  const amount=Math.round(parseFloat($('fAmt').value)*100)/100;if(!(amount>0))return toast('Enter an amount greater than zero.');
+  const data={supervisor:$('fSup').value.trim(),dept:$('fDept').value,amount,purpose:$('fPurpose').value.trim(),type:$('fType').value,remarks:$('fRem').value.trim(),date:$('fDate').value};
+  if(!S.editing){const dup=Object.keys(S.reqs).find(id=>{const r=S.reqs[id];return r.uid===S.uid&&r.amount===amount&&r.purpose.toLowerCase()===data.purpose.toLowerCase()&&r.date===data.date});
+    if(dup)return toast('You already sent this request ('+reqNo(dup)+'). Check My requests below.')}
+  $('fSubmit').disabled=true;
+  try{
+    if(S.editing){const r=S.reqs[S.editing];await setDoc(doc(S.db,'requests',S.editing),{...r,...data,rev:(r.rev||1)+1,updatedAt:nowIso()});toast('Request sent again to Accounting.')}
+    else{const id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);await setDoc(doc(S.db,'requests',id),{...data,uid:S.uid,rev:1,createdAt:nowIso()});toast('Request sent. It now shows in Accounting.')}
+    resetForm()
+  }catch(err){toast('Could not send the request. '+niceErr(err))}
+  finally{$('fSubmit').disabled=false}});
+$('fCancel').addEventListener('click',resetForm);
+
+/* ---------- reports, audit log, Excel export ---------- */
+const mParts=iso=>{const o={};new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date(iso)).forEach(x=>o[x.type]=x.value);if(o.hour==='24')o.hour='00';return o};
+const serialOf=iso=>{const o=mParts(iso);return Date.UTC(+o.year,+o.month-1,+o.day)/864e5+25569+(+o.hour*60+ +o.minute)/1440};
+const dateSerial=d=>{const[y,m,dd]=d.split('-').map(Number);return Date.UTC(y,m-1,dd)/864e5+25569};
+const ymOf=iso=>{const o=mParts(iso);return o.year+'-'+o.month};
+const inMonth=ym=>S.all||ym===S.month;
+const nameOf=uid=>uid===S.uid?(S.name||'You'):((S.users[uid]&&S.users[uid].name)||'Accounting user');
+const actLabel=(st,d)=>st===ST.A?'Approved. Voucher '+(d.pcvNo||'')+' created':st===ST.R?'Rejected':st===ST.C?'Returned for clarification':st===ST.X?'Marked as released':st;
+function buildEvents(){const ev=[];
+  Object.keys(S.reqs).forEach(id=>{const r=S.reqs[id],d=S.decs[id],v=Object.values(S.vouchers).find(x=>x.reqId===id);
+    if(r.createdAt)ev.push({at:r.createdAt,id,who:r.supervisor,action:'Submitted request',note:r.purpose,amount:r.amount});
+    if(r.updatedAt)ev.push({at:r.updatedAt,id,who:r.supervisor,action:'Sent request again (version '+r.rev+')',note:r.purpose,amount:r.amount});
+    if(d&&d.log)d.log.forEach(l=>ev.push({at:l.at,id,who:nameOf(l.by),action:actLabel(l.action,d),note:l.note||'',amount:d.approvedAmount??r.amount}));
+    if(v&&v.lastPrintedAt)ev.push({at:v.lastPrintedAt,id,who:nameOf(v.lastPrintedBy),action:'Voucher '+v.pcvNo+' printed ('+v.printCount+' time'+(v.printCount>1?'s':'')+' so far)',note:'',amount:v.amount})});
+  return ev.sort((a,b)=>b.at.localeCompare(a.at))}
+const repIds=()=>sorted(Object.keys(S.reqs).filter(id=>inMonth(S.reqs[id].date.slice(0,7))));
+function byType(ids){const m={};ids.forEach(id=>{const k=KEY[statusOf(id)];if(k!=='A'&&k!=='X')return;const d=S.decs[id],t=d.finalType||S.reqs[id].type,a=d.approvedAmount??S.reqs[id].amount;
+  m[t]=m[t]||{n:0,appr:0,rel:0};m[t].n++;m[t].appr+=a;if(k==='X')m[t].rel+=a});return Object.entries(m).sort((a,b)=>b[1].appr-a[1].appr)}
+function renderRep(){
+  if(!isAcc())return;
+  const ids=repIds();let req=0,appr=0,rel=0;ids.forEach(id=>{const r=S.reqs[id],d=S.decs[id],k=KEY[statusOf(id)];req+=r.amount;if(k==='A'||k==='X')appr+=d.approvedAmount??r.amount;if(k==='X')rel+=d.approvedAmount??r.amount});
+  $('repStats').innerHTML=[[ids.length,'Requests'],[peso.format(req),'Total requested'],[peso.format(appr),'Total approved'],[peso.format(rel),'Total released']].map(([n,l])=>`<div class="stat"><b style="font-size:${String(n).length>9?16:20}px">${n}</b><span>${l}</span></div>`).join('');
+  const bt=byType(ids);
+  $('repSum').innerHTML=bt.length?'<table style="min-width:520px"><thead><tr><th>Expense type</th><th class="n"># Approved</th><th class="n">Total approved</th><th class="n">Total released</th></tr></thead><tbody>'+bt.map(([t,v])=>`<tr><td>${esc(t)}</td><td class="n">${v.n}</td><td class="n">${peso.format(v.appr)}</td><td class="n">${peso.format(v.rel)}</td></tr>`).join('')+'</tbody></table>':'<div class="empty">No approved requests in this month yet.</div>';
+  const ev=buildEvents().filter(e=>inMonth(ymOf(e.at)));
+  $('repAudit').innerHTML=ev.length?'<table style="min-width:760px"><thead><tr><th>Date and time</th><th>Request</th><th>Requester</th><th>Action</th><th>Done by</th><th class="n">Amount</th><th>Remarks</th></tr></thead><tbody>'+ev.slice(0,300).map(e=>{const o=mParts(e.at),r=S.reqs[e.id];
+    return`<tr><td>${fmtDate(o.year+'-'+o.month+'-'+o.day)} ${o.hour}:${o.minute}</td><td class="mono">${reqNo(e.id)}</td><td>${esc(r.supervisor)}</td><td>${esc(e.action)}</td><td>${esc(e.who)}</td><td class="n">${peso.format(e.amount)}</td><td>${esc(e.note)}</td></tr>`}).join('')+'</tbody></table>'+(ev.length>300?'<div class="empty">Showing the latest 300. Download Excel for all of them.</div>':''):'<div class="empty">No activity in this month.</div>'}
+
+/* Minimal .xlsx writer (no outside library): sheets of text, numbers and dates, stored in a zip. */
+const colName=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s};
+const xe=t=>String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const XS={head:1,peso:2,date:3,dt:4,bold:5,boldPeso:6};
+function sheetXml(sh){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'
+   +sh.widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols><sheetData>';
+  sh.rows.forEach((row,ri)=>{x+=`<row r="${ri+1}">`;row.forEach((c,ci)=>{if(c===null||c===undefined||c==='')return;const ref=colName(ci)+(ri+1);
+    const v=(typeof c==='object')?c.v:c,st=(typeof c==='object')?c.s:(ri===0?XS.head:0);
+    x+=typeof v==='number'?`<c r="${ref}" s="${st}"><v>${v}</v></c>`:`<c r="${ref}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`});x+='</row>'});
+  return x+'</sheetData>'+(sh.filter?`<autoFilter ref="A1:${colName(sh.widths.length-1)}${sh.filter}"/>`:'')+'</worksheet>'}
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function zipBlob(files){const enc=new TextEncoder(),chunks=[],cd=[];let off=0;
+  files.forEach(f=>{const nm=enc.encode(f.name),data=enc.encode(f.text),crc=crc32(data),n=data.length;
+    const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(12,0x5D41,true);lh.setUint32(14,crc,true);lh.setUint32(18,n,true);lh.setUint32(22,n,true);lh.setUint16(26,nm.length,true);
+    chunks.push(new Uint8Array(lh.buffer),nm,data);
+    const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(14,0x5D41,true);ch.setUint32(16,crc,true);ch.setUint32(20,n,true);ch.setUint32(24,n,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nm);off+=30+nm.length+n});
+  const size=cd.reduce((s,u)=>s+u.length,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,off,true);
+  return new Blob([...chunks,...cd,new Uint8Array(e.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+function xlsxBlob(sheets){
+  const files=[
+   {name:'[Content_Types].xml',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'</Types>'},
+   {name:'_rels/.rels',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+   {name:'xl/workbook.xml',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map((s,i)=>`<sheet name="${xe(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+'</sheets></workbook>'},
+   {name:'xl/_rels/workbook.xml.rels',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+   {name:'xl/styles.xml',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;₱&quot;#,##0.00"/><numFmt numFmtId="165" formatCode="yyyy\\-mm\\-dd"/><numFmt numFmtId="166" formatCode="yyyy\\-mm\\-dd\\ hh:mm"/></numFmts><fonts count="2"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><name val="Arial"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9E5EC"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment wrapText="1" vertical="center"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'},
+   ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,text:sheetXml(s)}))];
+  return zipBlob(files)}
+function buildWorkbook(){
+  const ids=repIds();
+  const rq=[['Request No.','Request Date','Supervisor','Department','Amount Requested','Requested Expense Type','Final Expense Type','Approved Amount','Purpose','Remarks','Status','Accounting Remarks','PCV No.','Decision Date and Time','Released Date and Time','Times Printed']];
+  let tReq=0,tAppr=0;
+  ids.forEach(id=>{const r=S.reqs[id],d=S.decs[id],st=statusOf(id),k=KEY[st],v=Object.values(S.vouchers).find(x=>x.reqId===id),has=d&&k!=='P';
+    const appr=has&&(k==='A'||k==='X')?(d.approvedAmount??r.amount):null;tReq+=r.amount;if(appr!=null)tAppr+=appr;
+    rq.push([reqNo(id),{v:dateSerial(r.date),s:XS.date},r.supervisor,r.dept,{v:r.amount,s:XS.peso},r.type,has&&d.finalType?d.finalType:'',appr!=null?{v:appr,s:XS.peso}:'',r.purpose,r.remarks||'',st,has?(d.remarks||''):'',has&&d.pcvNo?d.pcvNo:'',has&&d.at?{v:serialOf(d.at),s:XS.dt}:'',d&&d.releasedAt?{v:serialOf(d.releasedAt),s:XS.dt}:'',v&&v.printCount?v.printCount:''])});
+  const n=rq.length-1;rq.push([]);rq.push([{v:'TOTAL',s:XS.bold},'','','',{v:tReq,s:XS.boldPeso},'','',{v:tAppr,s:XS.boldPeso}]);
+  const bt=byType(ids),ty=[['Expense Type','# Approved','Total Approved','Total Released']];let a=0,b=0,c=0;
+  bt.forEach(([t,v])=>{ty.push([t,v.n,{v:v.appr,s:XS.peso},{v:v.rel,s:XS.peso}]);a+=v.n;b+=v.appr;c+=v.rel});ty.push([]);ty.push([{v:'TOTAL',s:XS.bold},{v:a,s:XS.bold},{v:b,s:XS.boldPeso},{v:c,s:XS.boldPeso}]);
+  const au=[['Date and Time','Request No.','Requester','Action','Done By','Amount','Remarks']];
+  buildEvents().filter(e=>inMonth(ymOf(e.at))).forEach(e=>au.push([{v:serialOf(e.at),s:XS.dt},reqNo(e.id),S.reqs[e.id].supervisor,e.action,e.who,{v:e.amount,s:XS.peso},e.note]));
+  const lq=[['PCV No.','Request No.','Supervisor','Department','PCV Date','Expense Type','Amount Released','Total Spent','Unused Cash / (Excess Spent)','Liquidation Status','Summary','Breakdown','Submitted Date and Time','Verified Date and Time']];
+  ids.forEach(id=>{if(KEY[statusOf(id)]!=='X')return;const r=S.reqs[id],d=S.decs[id],l=lqOf(id),rel=d.approvedAmount??r.amount;
+    lq.push([d.pcvNo||'',reqNo(id),r.supervisor,r.dept,{v:dateSerial(r.date),s:XS.date},d.finalType||r.type,{v:rel,s:XS.peso},l&&l.spent!=null?{v:l.spent,s:XS.peso}:'',l&&l.balance!=null?{v:l.balance,s:XS.peso}:'',LQ[l?l.status:'OPEN'],l?l.summary||'':'',l&&l.items?l.items.map(x=>x.desc+' - '+x.amount.toFixed(2)).join('; '):'',l&&l.submittedAt?{v:serialOf(l.submittedAt),s:XS.dt}:'',l&&l.verifiedAt?{v:serialOf(l.verifiedAt),s:XS.dt}:''])});
+  return xlsxBlob([{name:'Requests',widths:[14,13,18,26,16,24,24,16,34,24,28,28,15,19,19,10],rows:rq,filter:n+1},{name:'By Expense Type',widths:[28,12,16,16],rows:ty},{name:'Audit Log',widths:[19,14,18,50,20,16,40],rows:au,filter:au.length},{name:'Liquidations',widths:[16,14,18,26,13,24,16,16,20,28,50,50,19,19],rows:lq,filter:lq.length}])}
+function downloadExcel(){
+  const blob=buildWorkbook(),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='PettyCash-'+(S.all?'all-months':S.month)+'.xlsx';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Excel file downloaded.')}
+$('repMonth').addEventListener('change',e=>{if(e.target.value){S.month=e.target.value;renderRep()}});
+$('repAll').addEventListener('change',e=>{S.all=e.target.checked;$('repMonth').disabled=S.all;renderRep()});
+$('repDl').addEventListener('click',downloadExcel);
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab],[data-a],[data-f]');if(!t)return;
+  if(t.dataset.tab)return setTab(t.dataset.tab);
+  if(t.dataset.f){S.filter=t.dataset.f;S.review=null;return renderAcc()}
+  const id=t.dataset.id,a=t.dataset.a;
+  if(a==='edit')editRequest(id);
+  else if(a==='review'){S.review=S.review&&S.review.id===id?null:{id,amount:S.reqs[id].amount,type:S.reqs[id].type,remarks:''};renderAcc()}
+  else if(a==='approve')approve(id);
+  else if(a==='reject')rejectOrReturn(id,ST.R);
+  else if(a==='return')rejectOrReturn(id,ST.C);
+  else if(a==='release')release(id);
+  else if(a==='view')openVoucher(id,false);
+  else if(a==='print')openVoucher(id,true)
+  else if(a==='liq')openLiq(id)
+  else if(a==='lq-add'){S.lq.form.items.push({desc:'',amount:''});drawLiq(false);const n=S.lq.form.items.length-1;$('lSheet').querySelector(`[data-li="${n}"][data-lf="desc"]`)?.focus()}
+  else if(a==='lq-del'){const f=S.lq.form;if(f.items.length===1)f.spent=lqTotals(f,0).spent||'';f.items.splice(+t.dataset.i,1);drawLiq(false)}
+  else if(a==='lq-save')saveLiq(false)
+  else if(a==='lq-submit')saveLiq(true)
+  else if(a==='lq-verify')reviewLiq(true)
+  else if(a==='lq-return')reviewLiq(false)
+  else if(a==='lq-print')window.print()
+  else if(a==='lq-close')closeLiq()});
+document.addEventListener('input',e=>{if(!S.review)return;const m={rAmt:'amount',rType:'type',rRem:'remarks'}[e.target.id];if(m)S.review[m]=e.target.value});
+document.addEventListener('change',async e=>{
+  if(e.target.id==='rType'&&S.review)S.review.type=e.target.value;
+  const u=e.target.dataset&&e.target.dataset.u;
+  if(u){try{await updateDoc(doc(S.db,'users',u),{[e.target.dataset.field]:e.target.value});toast('Saved.')}catch(err){toast('Could not save. '+niceErr(err));renderUsers()}}});
+$('mClose').addEventListener('click',()=>$('modal').hidden=true);
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')$('modal').hidden=true});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;$('modal').hidden=true;if(S.lq&&!S.lq.edit)closeLiq()});
+$('mPrint').addEventListener('click',printCurrent);
+$('saveCompany').addEventListener('click',async()=>{const n=$('companyName').value.trim();if(!n)return toast('Type the company name.');
+  try{await setDoc(doc(S.db,'settings','voucher'),{company:n});toast('Company name saved.')}catch(e){toast('Could not save. '+niceErr(e))}});
+
+/* ---------- log in / sign up ---------- */
+function authMsg(t,ok){const m=$('authMsg');m.textContent=t;m.hidden=!t;m.style.background=ok?'var(--ok-bg)':'var(--bad-bg)';m.style.color=ok?'var(--ok)':'var(--bad)'}
+const authErr=e=>({'auth/invalid-credential':'Wrong email or password.','auth/invalid-email':'That email does not look right.','auth/email-already-in-use':'That email already has an account. Try logging in.','auth/weak-password':'Password must be at least 6 characters.','auth/missing-password':'Type your password.','auth/too-many-requests':'Too many tries. Please wait a few minutes.','auth/network-request-failed':'No internet connection.','auth/user-not-found':'No account with that email.'}[e.code]||('Something went wrong. '+(e.message||'')));
+function setAuthMode(signup){S.signup=signup;$('nameRow').hidden=!signup;$('aName').required=signup;$('aSubmit').textContent=signup?'CREATE ACCOUNT':'LOG IN';$('aToggle').textContent=signup?'Already have an account? Log in':'New here? Create an account';$('authSub').textContent=signup?'Create your account. The Admin will then give you access.':'Log in to continue.';$('aPass').autocomplete=signup?'new-password':'current-password';authMsg('')}
+$('aToggle').addEventListener('click',()=>setAuthMode(!S.signup));
+$('authForm').addEventListener('submit',async e=>{e.preventDefault();authMsg('');$('aSubmit').disabled=true;
+  try{const email=$('aEmail').value.trim(),pw=$('aPass').value;
+    if(S.signup){S.pendingName=$('aName').value.trim();await createUserWithEmailAndPassword(S.auth,email,pw)}
+    else await signInWithEmailAndPassword(S.auth,email,pw)}
+  catch(err){authMsg(authErr(err))}finally{$('aSubmit').disabled=false}});
+$('aForgot').addEventListener('click',async()=>{const email=$('aEmail').value.trim();if(!email)return authMsg('Type your email first, then press Forgot password.');
+  try{await sendPasswordResetEmail(S.auth,email);authMsg('We sent a password reset link to your email.',true)}catch(err){authMsg(authErr(err))}});
+const doLogout=()=>signOut(S.auth);$('logout').addEventListener('click',doLogout);$('pendingOut').addEventListener('click',doLogout);
+
+/* ---------- start ---------- */
+function stopListeners(){S.unsubs.forEach(u=>{try{u()}catch(e){}});S.unsubs=[];S.reqs={};S.decs={};S.vouchers={};S.liqs={}}
+const onLiqs=s=>{S.liqs=snapMap(s);renderAll();if(S.lq&&!S.lq.edit&&!$('lmodal').hidden){const rem=$('lqRem')?.value;drawLiq(true);if(rem&&$('lqRem'))$('lqRem').value=rem}};
+const snapMap=s=>{const o={};s.forEach(d=>o[d.id]=d.data());return o};
+function startApp(){
+  const staff=isAcc();
+  $('whoName').textContent=S.name||S.email;$('whoRole').textContent=S.role==='admin'?'Admin':staff?'Accounting':'Supervisor';
+  $('tab-acc').hidden=!staff;$('tab-rep').hidden=!staff;$('tab-usr').hidden=S.role!=='admin';
+  if((!staff&&(S.tab==='acc'||S.tab==='rep'))||(S.role!=='admin'&&S.tab==='usr'))setTab('req');
+  stopListeners();const L=S.unsubs,err=()=>{};
+  if(staff){
+    L.push(onSnapshot(collection(S.db,'requests'),s=>{S.reqs=snapMap(s);renderAll()},err));
+    L.push(onSnapshot(collection(S.db,'decisions'),s=>{S.decs=snapMap(s);renderAll()},err));
+    L.push(onSnapshot(collection(S.db,'vouchers'),s=>{S.vouchers=snapMap(s);renderAll();if(!$('modal').hidden&&current){const v=Object.values(S.vouchers).find(x=>x.pcvNo===current.pcvNo);if(v){current=v;renderVoucher(v)}}},err));
+    L.push(onSnapshot(collection(S.db,'liquidations'),onLiqs,err));
+    L.push(onSnapshot(collection(S.db,'users'),s=>{S.users=snapMap(s);renderAll()},err));
+    L.push(onSnapshot(doc(S.db,'settings','voucher'),s=>{if(s.exists()){S.company=s.data().company||S.company;$('companyName').value=s.data().company||''}},err));
+  }else{
+    L.push(onSnapshot(query(collection(S.db,'requests'),where('uid','==',S.uid)),s=>{S.reqs=snapMap(s);renderAll()},err));
+    L.push(onSnapshot(query(collection(S.db,'decisions'),where('uid','==',S.uid)),s=>{S.decs=snapMap(s);renderAll()},err));
+    L.push(onSnapshot(query(collection(S.db,'liquidations'),where('uid','==',S.uid)),onLiqs,err));
+  }
+  if(!$('fSup').value)$('fSup').value=S.name||'';
+  show('appView');renderAll()}
+let userUnsub=null;
+function boot(){
+  $('fDate').value=todayManila();S.month=todayManila().slice(0,7);$('repMonth').value=S.month;
+  $('fDept').innerHTML='<option value="" disabled selected>Choose department</option>'+DEPTS.map(d=>`<option>${esc(d)}</option>`).join('');
+  $('fType').innerHTML='<option value="" disabled selected>Choose expense type</option>'+TYPES.map(t=>`<option>${esc(t)}</option>`).join('');
+  setAuthMode(false);
+  if(!firebaseConfig.apiKey||firebaseConfig.apiKey.startsWith('PASTE')){$('setupBanner').hidden=false;$('authForm').hidden=true;show('authView');return}
+  S.fb=initializeApp(firebaseConfig);S.auth=getAuth(S.fb);S.db=getFirestore(S.fb);
+  onAuthStateChanged(S.auth,user=>{
+    if(userUnsub){userUnsub();userUnsub=null}stopListeners();
+    if(!user){S.uid=null;S.users={};S.role='pending';$('authForm').reset();setAuthMode(false);show('authView');return}
+    S.uid=user.uid;S.email=(user.email||'').toLowerCase();let creating=false;
+    userUnsub=onSnapshot(doc(S.db,'users',S.uid),async snap=>{
+      if(!snap.exists()){
+        if(creating)return;creating=true;
+        const isAdmin=S.email===String(ADMIN_EMAIL).toLowerCase();
+        try{await setDoc(doc(S.db,'users',S.uid),{email:S.email,name:S.pendingName||S.email.split('@')[0],role:isAdmin?'admin':'pending',department:'',createdAt:nowIso()})}
+        catch(e){toast('Could not create your profile. '+niceErr(e));creating=false}
+        return}
+      const u=snap.data(),oldRole=S.role;S.name=u.name||'';S.role=u.role||'pending';S.users[S.uid]=u;
+      if(S.role==='pending'||!ROLES.includes(S.role)){$('pendingEmail').textContent=S.email;show('pendingView');stopListeners();return}
+      if($('appView').hidden||oldRole!==S.role||!S.unsubs.length){startApp();resetForm()}
+    },e=>{toast('Could not load your profile. '+niceErr(e));show('authView')})})}
+boot();
+</script>
+</body>
+</html>
